@@ -56,6 +56,7 @@ type SortField = 'created_at' | 'deadline' | 'priority';
 type SortOrder = 'asc' | 'desc';
 
 export default function TaskList({ selectedAgent }: TaskListProps) {
+  // 1. State hooks
   const [tasks, setTasks] = useState<Task[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,15 +66,30 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
-  
-  // Filter states
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Sort states
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+  // 2. Callback hooks
+  const handleTaskUpdate = useCallback((updatedTask: Task) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === updatedTask.id ? updatedTask : task
+      )
+    );
+  }, []);
+
+  const handleTaskDelete = useCallback((deletedTask: Task) => {
+    setTasks((currentTasks) =>
+      currentTasks.filter((task) => task.id !== deletedTask.id)
+    );
+  }, []);
+
+  const handleTaskInsert = useCallback((newTask: Task) => {
+    setTasks((currentTasks) => [newTask, ...currentTasks]);
+  }, []);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -121,6 +137,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
     }
   }, []);
 
+  // 3. Effect hooks
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -138,25 +155,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
     fetchData();
   }, [fetchTasks, fetchAgents]);
 
-  const handleTaskUpdate = useCallback((updatedTask: Task) => {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === updatedTask.id ? updatedTask : task
-      )
-    );
-  }, []);
-
-  const handleTaskDelete = useCallback((deletedTask: Task) => {
-    setTasks((currentTasks) =>
-      currentTasks.filter((task) => task.id !== deletedTask.id)
-    );
-  }, []);
-
-  const handleTaskInsert = useCallback((newTask: Task) => {
-    setTasks((currentTasks) => [newTask, ...currentTasks]);
-  }, []);
-
-  // Subscribe to real-time updates
+  // 4. Subscription hooks
   useRealtimeSubscription<Task>('tasks', (payload) => {
     if (payload) {
       handleTaskUpdate(payload);

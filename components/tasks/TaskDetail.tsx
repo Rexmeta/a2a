@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -39,11 +39,13 @@ const priorityColors = {
 } as const;
 
 export default function TaskDetail({ task, open, onClose }: TaskDetailProps) {
+  // 1. State hooks
   const [assignedAgent, setAssignedAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAssignedAgent = async () => {
+  // 2. Callback hooks
+  const fetchAssignedAgent = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('agents')
@@ -59,8 +61,9 @@ export default function TaskDetail({ task, open, onClose }: TaskDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [task.assigned_to]);
 
+  // 3. Effect hooks
   useEffect(() => {
     if (task.assigned_to) {
       fetchAssignedAgent();
