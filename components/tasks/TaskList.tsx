@@ -52,7 +52,7 @@ const priorityColors = {
   high: 'error',
 } as const;
 
-type SortField = 'created_at' | 'deadline' | 'priority';
+type SortField = 'createdAt' | 'deadline' | 'priority';
 type SortOrder = 'asc' | 'desc';
 
 export default function TaskList({ selectedAgent }: TaskListProps) {
@@ -72,7 +72,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Sort states
-  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const handleTaskUpdate = useCallback((updatedTask: Task) => {
@@ -101,19 +101,28 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   });
 
   useEffect(() => {
-    fetchTasks();
-    fetchAgents();
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        await Promise.all([fetchTasks(), fetchAgents()]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to fetch data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [selectedAgent]);
 
   const fetchTasks = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
       let query = supabase
         .from('tasks')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
       if (selectedAgent) {
         query = query.eq('assigned_to', selectedAgent);
@@ -127,23 +136,15 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
         return;
       }
 
-      if (!data) {
-        setError('No tasks found');
-        return;
-      }
-
-      setTasks(data);
+      setTasks(data || []);
     } catch (error) {
       console.error('Error in fetchTasks:', error);
       setError('An unexpected error occurred while fetching tasks');
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchAgents = async () => {
     try {
-      setError(null);
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -155,12 +156,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
         return;
       }
 
-      if (!data) {
-        setError('No agents found');
-        return;
-      }
-
-      setAgents(data);
+      setAgents(data || []);
     } catch (error) {
       console.error('Error in fetchAgents:', error);
       setError('An unexpected error occurred while fetching agents');
@@ -264,7 +260,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
     result.sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
-        case 'created_at':
+        case 'createdAt':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
         case 'deadline':
@@ -368,7 +364,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
                 onChange={(e) => setSortField(e.target.value as SortField)}
                 startAdornment={<SortIcon sx={{ mr: 1 }} />}
               >
-                <MenuItem value="created_at">Created Date</MenuItem>
+                <MenuItem value="createdAt">Created Date</MenuItem>
                 <MenuItem value="deadline">Deadline</MenuItem>
                 <MenuItem value="priority">Priority</MenuItem>
               </Select>

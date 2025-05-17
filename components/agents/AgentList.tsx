@@ -52,18 +52,31 @@ export default function AgentList({ onSelectAgent, selectedAgent }: AgentListPro
     setAgents((currentAgents) => [newAgent, ...currentAgents]);
   }, []);
 
-  // Subscribe to real-time updates
   useRealtimeSubscription<Agent>('agents', (payload) => {
     if (payload) {
       handleAgentUpdate(payload);
     }
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        await fetchAgents();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to fetch data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const fetchAgents = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -75,23 +88,12 @@ export default function AgentList({ onSelectAgent, selectedAgent }: AgentListPro
         return;
       }
 
-      if (!data) {
-        setError('No agents found');
-        return;
-      }
-
-      setAgents(data);
+      setAgents(data || []);
     } catch (error) {
       console.error('Error in fetchAgents:', error);
       setError('An unexpected error occurred while fetching agents');
-    } finally {
-      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchAgents();
-  }, []);
 
   const handleDelete = async (agentId: string) => {
     try {
