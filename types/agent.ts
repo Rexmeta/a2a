@@ -6,22 +6,22 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
+  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  assigned_to: string | null;
   deadline?: string;
-  assignedTo?: string;
-  createdAt: string;
-  updatedAt?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Agent {
   id: string;
   name: string;
   description: string;
-  status: AgentStatus;
+  status: 'idle' | 'busy' | 'error';
   capabilities: string[];
-  createdAt: string;
-  updatedAt?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TaskChain {

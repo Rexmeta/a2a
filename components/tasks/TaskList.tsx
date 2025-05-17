@@ -52,7 +52,7 @@ const priorityColors = {
   high: 'error',
 } as const;
 
-type SortField = 'createdAt' | 'deadline' | 'priority';
+type SortField = 'created_at' | 'deadline' | 'priority';
 type SortOrder = 'asc' | 'desc';
 
 export default function TaskList({ selectedAgent }: TaskListProps) {
@@ -72,7 +72,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Sort states
-  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const handleTaskUpdate = useCallback((updatedTask: Task) => {
@@ -122,7 +122,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
       let query = supabase
         .from('tasks')
         .select('*')
-        .order('createdAt', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (selectedAgent) {
         query = query.eq('assigned_to', selectedAgent);
@@ -260,8 +260,8 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
     result.sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
-        case 'createdAt':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'created_at':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           break;
         case 'deadline':
           if (!a.deadline && !b.deadline) return 0;
@@ -364,7 +364,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
                 onChange={(e) => setSortField(e.target.value as SortField)}
                 startAdornment={<SortIcon sx={{ mr: 1 }} />}
               >
-                <MenuItem value="createdAt">Created Date</MenuItem>
+                <MenuItem value="created_at">Created Date</MenuItem>
                 <MenuItem value="deadline">Deadline</MenuItem>
                 <MenuItem value="priority">Priority</MenuItem>
               </Select>
