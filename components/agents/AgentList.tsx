@@ -10,11 +10,17 @@ import {
   Chip,
   Typography,
   Box,
+  CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Agent } from '@/types/agent';
 import { supabase } from '@/lib/supabase';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
+
+interface AgentListProps {
+  onSelectAgent: (agentId: string | null) => void;
+  selectedAgent: string | null;
+}
 
 const statusColors = {
   idle: 'success',
@@ -22,7 +28,7 @@ const statusColors = {
   error: 'error',
 } as const;
 
-export default function AgentList() {
+export default function AgentList({ onSelectAgent, selectedAgent }: AgentListProps) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,61 +91,70 @@ export default function AgentList() {
   };
 
   if (loading) {
-    return <Typography>Loading agents...</Typography>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <List>
-      {agents.map((agent) => (
-        <ListItem
-          key={agent.id}
-          sx={{
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 1,
-            mb: 1,
-          }}
-        >
-          <ListItemText
-            primary={agent.name}
-            secondary={
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {agent.description}
-                </Typography>
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Agents
+      </Typography>
+      <List>
+        {agents.map((agent) => (
+          <ListItem
+            key={agent.id}
+            button
+            selected={selectedAgent === agent.id}
+            onClick={() => onSelectAgent(agent.id)}
+          >
+            <ListItemText
+              primary={agent.name}
+              secondary={
                 <Box sx={{ mt: 1 }}>
-                  {agent.capabilities.map((capability) => (
-                    <Chip
-                      key={capability}
-                      label={capability}
-                      size="small"
-                      sx={{ mr: 0.5 }}
-                    />
-                  ))}
+                  <Typography variant="body2" color="text.secondary">
+                    {agent.description}
+                  </Typography>
+                  <Box sx={{ mt: 1 }}>
+                    {agent.capabilities.map((capability) => (
+                      <Chip
+                        key={capability}
+                        label={capability}
+                        size="small"
+                        sx={{ mr: 0.5 }}
+                      />
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
-            }
-          />
-          <ListItemSecondaryAction>
-            <Chip
-              label={agent.status}
-              color={statusColors[agent.status]}
-              size="small"
-              sx={{ mr: 1 }}
+              }
             />
-            <IconButton edge="end" aria-label="edit" sx={{ mr: 1 }}>
-              <EditIcon />
-            </IconButton>
-            <IconButton
-              edge="end"
-              aria-label="delete"
-              onClick={() => handleDelete(agent.id)}
-            >
-              <DeleteIcon />
-            </IconButton>
-          </ListItemSecondaryAction>
-        </ListItem>
-      ))}
-    </List>
+            <ListItemSecondaryAction>
+              <Chip
+                label={agent.status}
+                color={statusColors[agent.status]}
+                size="small"
+                sx={{ mr: 1 }}
+              />
+              <IconButton edge="end" aria-label="edit" sx={{ mr: 1 }}>
+                <EditIcon />
+              </IconButton>
+              <IconButton
+                edge="end"
+                aria-label="delete"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleDelete(agent.id);
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </ListItemSecondaryAction>
+          </ListItem>
+        ))}
+      </List>
+    </Box>
   );
 } 
