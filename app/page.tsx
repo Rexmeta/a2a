@@ -1,3 +1,5 @@
+'use client';
+
 import { Box, Container, Typography } from '@mui/material';
 import TaskList from '@/components/tasks/TaskList';
 import AgentList from '@/components/agents/AgentList';
