@@ -75,7 +75,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       let query = supabase
         .from('tasks')
@@ -99,9 +99,9 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
       console.error('Error in fetchTasks:', error);
       setError('An unexpected error occurred while fetching tasks');
     }
-  };
+  }, [selectedAgent]);
 
-  const fetchAgents = async () => {
+  const fetchAgents = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('agents')
@@ -119,7 +119,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
       console.error('Error in fetchAgents:', error);
       setError('An unexpected error occurred while fetching agents');
     }
-  };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,7 +136,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
     };
 
     fetchData();
-  }, [selectedAgent, fetchTasks, fetchAgents]);
+  }, [fetchTasks, fetchAgents]);
 
   const handleTaskUpdate = useCallback((updatedTask: Task) => {
     setTasks((currentTasks) =>
