@@ -59,6 +59,7 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -106,6 +107,9 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
 
   const fetchTasks = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       let query = supabase
         .from('tasks')
         .select('*')
@@ -117,10 +121,21 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
 
       const { data, error } = await query;
 
-      if (error) throw error;
-      setTasks(data || []);
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        setError(`Failed to fetch tasks: ${error.message}`);
+        return;
+      }
+
+      if (!data) {
+        setError('No tasks found');
+        return;
+      }
+
+      setTasks(data);
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('Error in fetchTasks:', error);
+      setError('An unexpected error occurred while fetching tasks');
     } finally {
       setLoading(false);
     }
@@ -128,15 +143,27 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
 
   const fetchAgents = async () => {
     try {
+      setError(null);
       const { data, error } = await supabase
         .from('agents')
         .select('*')
         .eq('status', 'idle');
 
-      if (error) throw error;
-      setAgents(data || []);
+      if (error) {
+        console.error('Error fetching agents:', error);
+        setError(`Failed to fetch agents: ${error.message}`);
+        return;
+      }
+
+      if (!data) {
+        setError('No agents found');
+        return;
+      }
+
+      setAgents(data);
     } catch (error) {
-      console.error('Error fetching agents:', error);
+      console.error('Error in fetchAgents:', error);
+      setError('An unexpected error occurred while fetching agents');
     }
   };
 
@@ -258,7 +285,34 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   }, [tasks, statusFilter, priorityFilter, searchQuery, sortField, sortOrder]);
 
   if (loading) {
-    return <Typography>Loading tasks...</Typography>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" gap={2} p={3}>
+        <Typography color="error" variant="h6">
+          Error
+        </Typography>
+        <Typography color="error">
+          {error}
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={() => {
+            setError(null);
+            fetchTasks();
+            fetchAgents();
+          }}
+        >
+          Retry
+        </Button>
+      </Box>
+    );
   }
 
   return (

@@ -11,6 +11,7 @@ import {
   Typography,
   Box,
   CircularProgress,
+  Button,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Agent } from '@/types/agent';
@@ -31,6 +32,7 @@ const statusColors = {
 export default function AgentList({ onSelectAgent, selectedAgent }: AgentListProps) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAgentUpdate = useCallback((updatedAgent: Agent) => {
     setAgents((currentAgents) =>
@@ -57,25 +59,39 @@ export default function AgentList({ onSelectAgent, selectedAgent }: AgentListPro
     }
   });
 
-  useEffect(() => {
-    fetchAgents();
-  }, []);
-
   const fetchAgents = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('agents')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setAgents(data || []);
+      if (error) {
+        console.error('Error fetching agents:', error);
+        setError(`Failed to fetch agents: ${error.message}`);
+        return;
+      }
+
+      if (!data) {
+        setError('No agents found');
+        return;
+      }
+
+      setAgents(data);
     } catch (error) {
-      console.error('Error fetching agents:', error);
+      console.error('Error in fetchAgents:', error);
+      setError('An unexpected error occurred while fetching agents');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
 
   const handleDelete = async (agentId: string) => {
     try {
@@ -94,6 +110,28 @@ export default function AgentList({ onSelectAgent, selectedAgent }: AgentListPro
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" gap={2} p={3}>
+        <Typography color="error" variant="h6">
+          Error
+        </Typography>
+        <Typography color="error">
+          {error}
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={() => {
+            setError(null);
+            fetchAgents();
+          }}
+        >
+          Retry
+        </Button>
       </Box>
     );
   }
