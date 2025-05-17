@@ -75,48 +75,6 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
-  const handleTaskUpdate = useCallback((updatedTask: Task) => {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === updatedTask.id ? updatedTask : task
-      )
-    );
-  }, []);
-
-  const handleTaskDelete = useCallback((deletedTask: Task) => {
-    setTasks((currentTasks) =>
-      currentTasks.filter((task) => task.id !== deletedTask.id)
-    );
-  }, []);
-
-  const handleTaskInsert = useCallback((newTask: Task) => {
-    setTasks((currentTasks) => [newTask, ...currentTasks]);
-  }, []);
-
-  // Subscribe to real-time updates
-  useRealtimeSubscription<Task>('tasks', (payload) => {
-    if (payload) {
-      handleTaskUpdate(payload);
-    }
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        await Promise.all([fetchTasks(), fetchAgents()]);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Failed to fetch data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [selectedAgent]);
-
   const fetchTasks = async () => {
     try {
       let query = supabase
@@ -162,6 +120,48 @@ export default function TaskList({ selectedAgent }: TaskListProps) {
       setError('An unexpected error occurred while fetching agents');
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        await Promise.all([fetchTasks(), fetchAgents()]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to fetch data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedAgent, fetchTasks, fetchAgents]);
+
+  const handleTaskUpdate = useCallback((updatedTask: Task) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === updatedTask.id ? updatedTask : task
+      )
+    );
+  }, []);
+
+  const handleTaskDelete = useCallback((deletedTask: Task) => {
+    setTasks((currentTasks) =>
+      currentTasks.filter((task) => task.id !== deletedTask.id)
+    );
+  }, []);
+
+  const handleTaskInsert = useCallback((newTask: Task) => {
+    setTasks((currentTasks) => [newTask, ...currentTasks]);
+  }, []);
+
+  // Subscribe to real-time updates
+  useRealtimeSubscription<Task>('tasks', (payload) => {
+    if (payload) {
+      handleTaskUpdate(payload);
+    }
+  });
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, task: Task) => {
     setAnchorEl(event.currentTarget);

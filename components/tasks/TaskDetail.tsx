@@ -41,31 +41,33 @@ const priorityColors = {
 export default function TaskDetail({ task, open, onClose }: TaskDetailProps) {
   const [assignedAgent, setAssignedAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (task.assignedTo) {
-      fetchAssignedAgent();
-    } else {
-      setLoading(false);
-    }
-  }, [task.assignedTo]);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAssignedAgent = async () => {
     try {
       const { data, error } = await supabase
         .from('agents')
         .select('*')
-        .eq('id', task.assignedTo)
+        .eq('id', task.assigned_to)
         .single();
 
       if (error) throw error;
       setAssignedAgent(data);
     } catch (error) {
       console.error('Error fetching assigned agent:', error);
+      setError('Failed to fetch assigned agent');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (task.assigned_to) {
+      fetchAssignedAgent();
+    } else {
+      setLoading(false);
+    }
+  }, [task.assigned_to, fetchAssignedAgent]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -107,7 +109,7 @@ export default function TaskDetail({ task, open, onClose }: TaskDetailProps) {
               <ListItem>
                 <ListItemText
                   primary="Created"
-                  secondary={new Date(task.createdAt).toLocaleString()}
+                  secondary={new Date(task.created_at).toLocaleString()}
                 />
               </ListItem>
               {task.deadline && (
@@ -118,11 +120,11 @@ export default function TaskDetail({ task, open, onClose }: TaskDetailProps) {
                   />
                 </ListItem>
               )}
-              {task.updatedAt && (
+              {task.updated_at && (
                 <ListItem>
                   <ListItemText
                     primary="Last Updated"
-                    secondary={new Date(task.updatedAt).toLocaleString()}
+                    secondary={new Date(task.updated_at).toLocaleString()}
                   />
                 </ListItem>
               )}
