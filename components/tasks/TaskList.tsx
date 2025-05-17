@@ -35,6 +35,10 @@ import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import TaskForm from './TaskForm';
 import TaskDetail from './TaskDetail';
 
+interface TaskListProps {
+  selectedAgent: string | null;
+}
+
 const statusColors = {
   pending: 'default',
   in_progress: 'primary',
@@ -51,7 +55,7 @@ const priorityColors = {
 type SortField = 'created_at' | 'deadline' | 'priority';
 type SortOrder = 'asc' | 'desc';
 
-export default function TaskList() {
+export default function TaskList({ selectedAgent }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,14 +102,20 @@ export default function TaskList() {
   useEffect(() => {
     fetchTasks();
     fetchAgents();
-  }, []);
+  }, [selectedAgent]);
 
   const fetchTasks = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('tasks')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (selectedAgent) {
+        query = query.eq('assigned_to', selectedAgent);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setTasks(data || []);
